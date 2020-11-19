@@ -1,0 +1,30 @@
+FAQ: 
+1. What is the format of the tagged dataset? 
+	Input data: 
+	We are using a small newswire part of the standard benchmark collection called TIPSTER. Each file in the collection contains a 10s to few hundred documents (these are the units to be retrieved). Each document begins with a tag <DOC> and ends with </DOC>. Within each document there are different fields (some of these fields may not be present, except the DOCNO field):
+
+		<DOCNO>...</DOCNO> - a unique document id 
+		<FILEID>...</FILEID> - a file id that can be ignored 
+		<FIRST>...</FIRST>,<SECOND>...</SECOND>,<HEAD>...</HEAD> - these may contain headline-type information, or notes to the editor, notices of upcoming stories, etc. They are also extremely noisy. You may ignore the content in these tags as well. 
+		<DATELINE>...</DATELINE> - this contains the source location of the story. 
+		<BYLINE>...</BYLINE> - this field, if present, contains the author information. 
+
+		<TEXT>...</TEXT> - this is the actual content of the article. It may be empty for some documents. Documents which contain empty text need not be indexed. 
+
+	Tagging process:
+	We have tagged all the text (content between <TEXT> tags) by running it through NLTK/StanfordNLP named-entity recognizer. It tags terms using <PERSON>, <LOCATION>, <ORGANIZATION> tags (with corresponding end tags). Sometimes, each term of a multi-term entity name may be tagged separately. For example, 
+		"The Soviet Parliament on Wednesday put off voting on a progressive tax on people who work for private cooperatives, a key element of <PERSON> Mikhail </PERSON> <PERSON> S. </PERSON> <PERSON> Gorbachev </PERSON>'s reforms." : here "Mikhail S. Gorbachev" is the full PERSON entity split-tagged in three terms. 
+	You should merge such sequence of same tags into a single PERSON term. 
+
+2. How large is the dataset ?
+	We are releasing only a small subset of the benchmark collection consisting of 81,946 documents in 344 files. 
+
+3. What about the queries? 
+	We will use the topics.51-100 from TREC-1 (https://trec.nist.gov/data/topics_eng/topics.51-100.gz). Note that the topics file contains 50 individual topics, and each of them have the following fields: <head>, <num>, <dom>, <title>, <desc>, <smry>, <narr>, <con>, <fac>,and <def>. You are allowed to use only content in <title> field (excluding "Topic :" prefix in it). Do not use any other field contents. 
+
+4. What about relevance judgements?
+	The above topics were used by TREC-1 adhoc retrieval track over entire TIPSTER collection. So, we will filter the qrels (https://trec.nist.gov/data/qrels_eng/qrels.51-100.disk1.disk2.parts1-5.tar.gz) to limit them to only the AP documents that we are considering in this task. 
+	Note that our data release will further limit this qrels to refer to only the documents that are actually given to you. 
+
+5. What are we expected to submit? 
+	You should submit (a) your implementation of vector-space retrieval model including the inverted index construction, (b) scripts construct.py and retrieve.py suitably modified for your implementation - if required. and (c) precision, and nDCG of your system as reported trec_eval tool. 

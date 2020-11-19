@@ -1,0 +1,6 @@
+*.dict
+*.idx
+*.jar
+*.gz
+*resultfile
+*.xz
