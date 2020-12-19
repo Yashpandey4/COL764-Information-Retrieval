@@ -9,6 +9,15 @@ from itertools import islice
 from nltk.corpus import stopwords
 
 
+maxInt = sys.maxsize
+while True:
+    try:
+        csv.field_size_limit(maxInt)
+        break
+    except OverflowError:
+        maxInt = int(maxInt/10)
+
+
 def read_query_file():
     global query_with_id
     query_with_id = pd.read_csv(args.query_file, sep='\t', header=None, index_col=0).to_dict()[1]
@@ -283,6 +292,7 @@ def load_docs():
 
 
 # --query-file data\msmarco-docdev-queries.tsv --top-100-file data\msmarco-docdev-top100 --collection-file data\docs.tsv --model uni
+# --query-file data/msmarco-docdev-queries.tsv --top-100-file data/msmarco-docdev-top100 --collection-file data/docs.tsv --model uni
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Amazing IR System')
     parser.add_argument('--query-file', type=str, dest='query_file',

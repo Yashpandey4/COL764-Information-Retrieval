@@ -9,9 +9,19 @@ from itertools import islice
 from nltk.corpus import stopwords
 
 
+maxInt = sys.maxsize
+while True:
+    try:
+        csv.field_size_limit(maxInt)
+        break
+    except OverflowError:
+        maxInt = int(maxInt/10)
+
+
 def read_query_file():
     global query_with_id
-    query_with_id = pd.read_csv(args.query_file, sep='\t', header=None, index_col=0).to_dict()[1]
+    query_with_id = pd.read_csv(
+        args.query_file, sep='\t', header=None, index_col=0).to_dict()[1]
 
 
 def read_top_100_file_and_reweight():
@@ -23,11 +33,13 @@ def read_top_100_file_and_reweight():
             if not lines_gen:
                 break
 
-            query_to_top_docs = [out_line.strip().split()[2] for out_line in lines_gen]
+            query_to_top_docs = [out_line.strip().split()[2]
+                                 for out_line in lines_gen]
             query_id = lines_gen[0].split()[0]
             query_tokens = query_with_id[int(query_id)].strip().split()
             query_tokens = [word.lower().strip() for word in query_tokens]
-            query_tokens = [word for word in query_tokens if check_valid_token(word)]
+            query_tokens = [
+                word for word in query_tokens if check_valid_token(word)]
 
             load_docs()
             # print(query_to_top_docs)
@@ -84,8 +96,8 @@ def reorder_documents(query):
             n = len(inv_index[token])
             if doc in inv_index[token]:
                 new_doc_score += ((np.log(N_Collection) - np.log(n)) * inv_index[token][doc] * (bm25_k1 + 1)) / (
-                        bm25_k1 * ((1 - bm25_b) + (bm25_b * inv_index["$doc_len$"][doc] / avg_doc_len)) +
-                        inv_index[token][doc])
+                    bm25_k1 * ((1 - bm25_b) + (bm25_b * inv_index["$doc_len$"][doc] / avg_doc_len)) +
+                    inv_index[token][doc])
         new_doc_rank[doc] = new_doc_score
 
 
@@ -103,7 +115,8 @@ def calc_offer_weights():
         for doc, l in inv_index["$doc_len$"].items():
             agg_len += l
         # TODO - make 100 a variable size?
-        inv_index["$doc_len$"]["$avg_doc_len$"] = agg_len / 100  # len(inv_index["$doc_len$"])
+        inv_index["$doc_len$"]["$avg_doc_len$"] = agg_len / \
+            100  # len(inv_index["$doc_len$"])
     else:
         # TODO -Is the maxsize required on the full dataset?
         inv_index["$doc_len$"] = {"$avg_doc_len$": sys.maxsize}
@@ -112,8 +125,11 @@ def calc_offer_weights():
             continue
         r = len(inv_index[token])
         # TODO - make 100 a variable size?
-        n = len(inv_index[token]) * N_Collection / 100  # len(inv_index["$doc_len$"])
-        offer_weights[token] = r * np.log(((r - 0.5) * (N - n - R + r + 0.5)) / ((n - r + 0.5) * (R - r + 0.5)))
+        n = len(inv_index[token]) * N_Collection / \
+            100  # len(inv_index["$doc_len$"])
+        offer_weights[token] = r * \
+            np.log(((r - 0.5) * (N - n - R + r + 0.5)) /
+                   ((n - r + 0.5) * (R - r + 0.5)))
 
 
 def load_docs():
@@ -129,7 +145,8 @@ def load_docs():
             if doc_id in query_to_top_docs:
                 count += 1
                 data = ' '.join(row[2:])
-                data = data.translate(str.maketrans('', '', '[]{}()<>,;:+*^_\\\"\'?$&%#@~`.'))
+                data = data.translate(str.maketrans(
+                    '', '', '[]{}()<>,;:+*^_\\\"\'?$&%#@~`.'))
                 # data = data.translate(str.maketrans('', '', string.digits))
                 data = data.translate(str.maketrans('-', ' '))
                 data = data.split()
@@ -144,10 +161,12 @@ def load_docs():
                     if token not in inv_index:
                         inv_index[token] = {doc_id: 1}
                     else:
-                        inv_index[token][doc_id] = inv_index[token].get(doc_id, 0) + 1
+                        inv_index[token][doc_id] = inv_index[token].get(
+                            doc_id, 0) + 1
                     # valid_token_count += 1
                 if "$doc_len$" not in inv_index:
-                    inv_index["$doc_len$"] = {doc_id: len(data)}  # valid_token_count
+                    inv_index["$doc_len$"] = {
+                        doc_id: len(data)}  # valid_token_count
                 else:
                     inv_index["$doc_len$"][doc_id] = len(data)
                 agg_len_doc += len(data)  # valid_token_count
@@ -163,6 +182,7 @@ def load_docs():
 
 
 # --query-file data\msmarco-docdev-queries.tsv --top-100-file data\msmarco-docdev-top100 --collection-file data\docs.tsv --expansion-limit 10
+# --query-file data/msmarco-docdev-queries.tsv --top-100-file data/msmarco-docdev-top100 --collection-file data/docs.tsv --expansion-limit 10
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Amazing IR System')
     parser.add_argument('--query-file', type=str, dest='query_file',
@@ -190,7 +210,9 @@ if __name__ == "__main__":
     cachedStopWords = stopwords.words("english")
     offer_weights = {}
     new_doc_rank = {}
-    result_file = "prob_rerank_" + str(args.expansion_limit) + "_" + str(time.strftime("%H-%M-%S", time.gmtime()))
+    result_file = "prob_rerank_" + \
+        str(args.expansion_limit) + "_" + \
+        str(time.strftime("%H-%M-%S", time.gmtime()))
 
     start = time.time()
 
